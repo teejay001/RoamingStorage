@@ -3,10 +3,25 @@
  * See LICENSE in the project root for license information.
  */
 
-function onMessageSendHandler(event) {
+async function onMessageSendHandler(event) {
   Office.context.roamingSettings.set("lkey1", "Launch_Val_1");
   Office.context.roamingSettings.set("lkey2", "Launch_Val_2");
+  await saveRoamingSetings();
   Office.context.mailbox.item.body.getAsync("text", { asyncContext: event }, getBodyCallback);
+}
+
+function saveRoamingSetings(){
+  return new Promise((resolve, reject) => {
+    Office.context.roamingSettings.saveAsync((asyncResult) => {
+      if (asyncResult.status === Office.AsyncResultStatus.Failed) {
+        console.error(`Action failed with message ${asyncResult.error.message}`);
+        reject(asyncResult.error);
+      } else {
+        console.log(`Roaming Settings saved with status: ${asyncResult.value}`);
+        resolve(asyncResult.value);
+      }
+    });
+  });
 }
 
 function getBodyCallback(asyncResult) {
@@ -49,11 +64,13 @@ function hasMatches(body) {
 function getAttachmentsCallback(asyncResult) {
   const lVal1 = Office.context.roamingSettings.get("lkey1");
   const lVal2 = Office.context.roamingSettings.get("lkey2");
-  console.log(`LaunchEvent - Vals from roaming setting: lkey1 = ${lVal1} & lkey2 = ${lVal2}`);
+  const tee = `LaunchEvent - Vals from roaming setting: lkey1 = ${lVal1} & lkey2 = ${lVal2}`;
+  console.log(tee);
 
   const tVal1 = Office.context.roamingSettings.get("tkey1");
   const tVal2 = Office.context.roamingSettings.get("tkey2");
-  console.log(`Taskpane - Vals from roaming setting: tkey1 = ${tVal1} & tkey2 = ${tVal2}`);
+  const jay = `Taskpane - Vals from roaming setting: tkey1 = ${tVal1} & tkey2 = ${tVal2}`;
+  console.log(jay);
 
   let event = asyncResult.asyncContext;
   if (asyncResult.value.length > 0) {
@@ -64,9 +81,9 @@ function getAttachmentsCallback(asyncResult) {
       }
     }
 
-    event.completed({ allowEvent: false, errorMessage: "Looks like you forgot to include an attachment?" });
+    event.completed({ allowEvent: false, errorMessage: `Looks like you forgot to include an attachment? ..  ${tee} .. ${jay}` });
   } else {
-    event.completed({ allowEvent: false, errorMessage: "Looks like you're forgetting to include an attachment?" });
+    event.completed({ allowEvent: false, errorMessage: `Looks like you're forgetting to include an attachment?..  ${tee} .. ${jay}` });
   }
 }
 
